@@ -1,0 +1,52 @@
+networks:
+  dai-gurren-network:
+    driver: bridge
+
+volumes:
+  prometheus_data:
+  grafana_data:
+
+services:
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: node-exporter
+    networks:
+      - dai-gurren-network
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - dai-gurren-network
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=simon
+      - GF_SECURITY_ADMIN_PASSWORD=gigadrillbreaker
+    volumes:
+      - grafana_data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    networks:
+      - dai-gurren-network
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+  
+  node-app:
+    build: ./node-app
+    container_name: node-app
+    ports:
+      - "3001:3001"
+    networks:
+      - dai-gurren-network
+    restart: unless-stopped
